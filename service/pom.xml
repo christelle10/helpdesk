@@ -24,5 +24,13 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.exist</groupId>
+            <artifactId>repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.exist</groupId>
+            <artifactId>model</artifactId>
+        </dependency>
     </dependencies>
 </project>

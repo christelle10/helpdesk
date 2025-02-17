@@ -1,4 +1,4 @@
-package com.exist.helpdesk;
+package com.exist;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
