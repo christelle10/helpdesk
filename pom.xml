@@ -27,6 +27,7 @@
 		<module>service</module>
 		<module>controllers</module>
 		<module>app</module>
+		<module>utils</module>
 	</modules>
     <scm>
 		<connection/>
@@ -64,6 +65,11 @@
 			<dependency>
 				<groupId>com.exist</groupId>
 				<artifactId>controllers</artifactId>
+				<version>${project.version}</version> <!-- Use the parent's version -->
+			</dependency>
+			<dependency>
+				<groupId>com.exist</groupId>
+				<artifactId>utils</artifactId>
 				<version>${project.version}</version> <!-- Use the parent's version -->
 			</dependency>
 		</dependencies>

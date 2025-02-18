@@ -7,10 +7,10 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>model</artifactId>
+    <artifactId>utils</artifactId>
     <packaging>jar</packaging>
 
-    <name>model</name>
+    <name>utils</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -25,14 +25,5 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>utils</artifactId>
-        </dependency>
     </dependencies>
 </project>

@@ -3,6 +3,8 @@ package com.exist;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Getter
@@ -35,8 +37,8 @@ public class HelpdeskTicket {
     private LocalDateTime updatedDate;  // System-generated date for last update
     private String updatedBy;          // User who last updated the ticket
 
-    @Column(nullable = true)
-    private String remarks;
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Remark> remarks = new ArrayList<>();
 
     @PrePersist
     public void onCreate() {
