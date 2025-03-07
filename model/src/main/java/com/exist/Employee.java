@@ -37,7 +37,7 @@ public class Employee {
     @Column(nullable = false)
     private EmploymentStatus employmentStatus;
 
-    @ManyToOne
+    @ManyToOne //Many to Many
     @JoinColumn(name = "role_id")
     private Role role; //Deleting a Role entity associated to Employee entity will render this NULL
 

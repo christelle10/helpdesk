@@ -6,6 +6,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.beans.PropertyDescriptor;
 import java.time.LocalDate;
@@ -23,10 +24,11 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
-
+    //implement mapper for DTO -> Employee
     // Convert Employee -> EmployeeDTO
     private EmployeeDto convertToDTO(Employee employee) {
         String roleName = employee.getRole() != null ? employee.getRole().getRoleName() : "No Role Yet";
+        // BeanUtils.copyProperties; extracts a specific data by field, if you want to get a specific field from a whole entity
         return new EmployeeDto(
                 employee.getId(),
                 employee.getName(),
@@ -36,6 +38,7 @@ public class EmployeeService {
                 employee.getContactNumber(),
                 employee.getEmploymentStatus(),
                 roleName // Handle null case
+
         );
     }
 
@@ -61,7 +64,7 @@ public class EmployeeService {
         return employee;
     }
 
-
+    @Transactional
     // Create or update an employee record as DTO
     public EmployeeDto saveEmployee(EmployeeDto employeeDTO) {
         Employee employee = convertToEntity(employeeDTO);

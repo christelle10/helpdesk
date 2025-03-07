@@ -1,6 +1,7 @@
 package com.exist;
 
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,12 +10,9 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("api/tickets")
+@RequiredArgsConstructor
 public class HelpdeskTicketController {
     private final HelpdeskTicketService ticketService;
-
-    public HelpdeskTicketController(HelpdeskTicketService ticketService) {
-        this.ticketService = ticketService;
-    }
 
     @PostMapping
     public ResponseEntity<HelpdeskTicketDto> createTicket(@RequestBody HelpdeskTicketDto dto) {
