@@ -14,5 +14,6 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; //Id associated with role
 
-    private String name; //The role name
+    @Column(nullable = false)
+    private String roleName; //The role name
 }

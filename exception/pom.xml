@@ -7,10 +7,10 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>controllers</artifactId>
+    <artifactId>exception</artifactId>
     <packaging>jar</packaging>
 
-    <name>controllers</name>
+    <name>exception</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -23,18 +23,6 @@
             <artifactId>junit</artifactId>
             <version>3.8.1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>service</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>dto</artifactId>
         </dependency>
     </dependencies>
 </project>

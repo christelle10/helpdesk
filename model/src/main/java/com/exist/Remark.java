@@ -16,11 +16,13 @@ public class Remark {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column
     private String message;  // The actual remark content
 
+    @Column(nullable = false)
     private LocalDateTime createdDate;  // Timestamp when the remark was added
 
+    @Column(nullable = false)
     private String createdBy;  // User who added the remark
 
     @ManyToOne
@@ -30,6 +32,6 @@ public class Remark {
     @PrePersist
     public void onCreate() {
         this.createdDate = LocalDateTime.now();
-        this.createdBy = "System";  // Replace with actual authenticated user if needed
+        this.createdBy = "System";  // Set it as "System" for now since no Spring Security applied yet
     }
 }

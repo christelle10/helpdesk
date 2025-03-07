@@ -8,3 +8,13 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        transaction:
+          coordinator_class: jdbc
+logging:
+  level:
+    root: INFO
+    com.exist: DEBUG
+  file:
+    name: logs/application.log

@@ -1,5 +1,7 @@
 package com.exist;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -31,8 +33,9 @@ public class Employee {
     @Column(nullable = false)
     private String contactNumber;
 
+    @Enumerated(EnumType.STRING) // Store enum values as Strings in the DB
     @Column(nullable = false)
-    private String employmentStatus;
+    private EmploymentStatus employmentStatus;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -48,4 +51,6 @@ public class Employee {
     public void updateAgeBeforeSave() {
         this.age = DateUtils.calculateAge(this.birthdate); // Use utility method
     }
+
+
 }
