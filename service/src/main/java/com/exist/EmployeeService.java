@@ -24,59 +24,21 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
-    //implement mapper for DTO -> Employee
-    // Convert Employee -> EmployeeDTO
-    private EmployeeDto convertToDTO(Employee employee) {
-        String roleName = employee.getRole() != null ? employee.getRole().getRoleName() : "No Role Yet";
-        // BeanUtils.copyProperties; extracts a specific data by field, if you want to get a specific field from a whole entity
-        return new EmployeeDto(
-                employee.getId(),
-                employee.getName(),
-                employee.getBirthdate(),
-                employee.getAge(),
-                employee.getAddress(),
-                employee.getContactNumber(),
-                employee.getEmploymentStatus(),
-                roleName // Handle null case
-
-        );
-    }
-
-    // Convert EmployeeDTO -> Employee
-    private Employee convertToEntity(EmployeeDto employeeDto) {
-        validateEmployee(employeeDto);
-        Employee employee = new Employee();
-        employee.setId(employeeDto.getId());
-        employee.setName(employeeDto.getName());
-        employee.setBirthdate(employeeDto.getBirthdate());
-        employee.setAddress(employeeDto.getAddress());
-        employee.setContactNumber(employeeDto.getContactNumber());
-        employee.setEmploymentStatus(employeeDto.getEmploymentStatus());
-
-        // Find the Role entity by name
-        if (employeeDto.getRoleName() != null && !employeeDto.getRoleName().equals("No Role Yet")) {
-            Role role = roleRepository.findByRoleName(employeeDto.getRoleName());
-            employee.setRole(role);
-        } else {
-            employee.setRole(null); // Set role to null if roleName is "No Role Yet" or null
-        }
-
-        return employee;
-    }
+    private final EmployeeMapper employeeMapper;
 
     @Transactional
     // Create or update an employee record as DTO
     public EmployeeDto saveEmployee(EmployeeDto employeeDTO) {
-        Employee employee = convertToEntity(employeeDTO);
+        Employee employee = employeeMapper.toEntity(employeeDTO);
         Employee savedEmployee = employeeRepository.save(employee);
         log.info("Employee {} saved successfully with ID: {}", employeeDTO.getName(), savedEmployee.getId());
-        return convertToDTO(savedEmployee);
+        return employeeMapper.toDto(savedEmployee);
     }
 
     // Get a single employee by ID as DTO
     public EmployeeDto getEmployeeById(Long id) {
         return employeeRepository.findById(id)
-                .map(this::convertToDTO)
+                .map(employeeMapper::toDto)
                 .orElseThrow(() -> {
                     log.error("Employee with ID {} not found", id);
                     return new EmployeeNotFoundException("Employee with ID " + id + " not found.");
@@ -87,7 +49,7 @@ public class EmployeeService {
     public List<EmployeeDto> getAllEmployees() {
         List<Employee> employees = employeeRepository.findAll();
         log.info("Total employees found: {}", employees.size());
-        return employees.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return employees.stream().map(employeeMapper::toDto).collect(Collectors.toList());
     }
 
     public EmployeeDto updateEmployee(Long id, EmployeeDto employeeDTO, boolean isFullUpdate) {
@@ -103,7 +65,7 @@ public class EmployeeService {
                         // Full update: Replace all fields
                         log.info("Performing full update on employee with ID: {}", id);
                         validateEmployee(employeeDTO);
-                        Employee updatedEmployee = convertToEntity(employeeDTO);
+                        Employee updatedEmployee = employeeMapper.toEntity(employeeDTO);
                         updatedEmployee.setId(id); // Ensure ID remains unchanged
                         return employeeRepository.save(updatedEmployee);
                     } else {
@@ -114,7 +76,7 @@ public class EmployeeService {
                         return employeeRepository.save(existingEmployee);
                     }
                 })
-                .map(this::convertToDTO)
+                .map(employeeMapper::toDto)
                 .orElseThrow(() -> {
                     log.error("Employee with ID {} not found for update", id);
                     return new EmployeeNotFoundException("Employee with ID " + id + " not found.");

@@ -8,4 +8,5 @@ public interface HelpdeskTicketRepository extends JpaRepository<HelpdeskTicket, 
     // Find tickets by status
     List<HelpdeskTicket> findByStatus(HelpdeskTicket.Status status);
     List<HelpdeskTicket> findByAssignedEmployeeIsNotNull();
+    List<HelpdeskTicket> findByAssignedEmployeeId(Long employeeId);
 }

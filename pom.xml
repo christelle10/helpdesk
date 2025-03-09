@@ -30,6 +30,7 @@
 		<module>utils</module>
         <module>dto</module>
 		<module>exception</module>
+		<module>mappers</module>
 	</modules>
     <scm>
 		<connection/>
@@ -91,6 +92,11 @@
 				<artifactId>exception</artifactId>
 				<version>${project.version}</version> <!-- Use the parent's version -->
 			</dependency>
+			<dependency>
+				<groupId>com.exist</groupId>
+				<artifactId>mappers</artifactId>
+				<version>${project.version}</version> <!-- Use the parent's version -->
+			</dependency>
 			<!-- JUnit 5 -->
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
@@ -125,6 +131,25 @@
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
 				<version>2.0.9</version>
+			</dependency>
+			<!-- MapStruct Dependency -->
+			<dependency>
+				<groupId>org.mapstruct</groupId>
+				<artifactId>mapstruct</artifactId>
+				<version>1.5.5.Final</version>
+			</dependency>
+			<!-- Annotation Processor (for auto-generating mappers) -->
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok-mapstruct-binding</artifactId>
+				<version>0.2.0</version>
+			</dependency>
+			<!-- MapStruct Processor -->
+			<dependency>
+				<groupId>org.mapstruct</groupId>
+				<artifactId>mapstruct-processor</artifactId>
+				<version>1.5.5.Final</version>
+				<scope>provided</scope>
 			</dependency>
 
 		</dependencies>
@@ -222,6 +247,8 @@
 			</plugins>
 		</pluginManagement>
 		<plugins>
+
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -234,6 +261,12 @@
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 							<version>1.18.36</version>
+						</path>
+						<!-- Add MapStruct Processor here -->
+						<path>
+							<groupId>org.mapstruct</groupId>
+							<artifactId>mapstruct-processor</artifactId>
+							<version>1.5.5.Final</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>

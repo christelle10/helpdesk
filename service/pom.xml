@@ -62,6 +62,10 @@
             <groupId>com.exist</groupId>
             <artifactId>exception</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.exist</groupId>
+            <artifactId>mappers</artifactId>
+        </dependency>
 
     </dependencies>
     <build>

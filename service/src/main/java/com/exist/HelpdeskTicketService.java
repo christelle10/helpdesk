@@ -16,17 +16,17 @@ public class HelpdeskTicketService {
     private final HelpdeskTicketRepository ticketRepository;
     private final RemarkRepository remarkRepository;
     private final EmployeeRepository employeeRepository;
+    private final HelpdeskTicketMapper ticketMapper;
 
     @Transactional
     public HelpdeskTicketDto createTicket(HelpdeskTicketDto dto) {
-        HelpdeskTicket ticket = new HelpdeskTicket();
-        ticket.setTitle(dto.getTitle());
+        HelpdeskTicket ticket = ticketMapper.toEntity(dto); // Map DTO to Entity
+        /*ticket.setTitle(dto.getTitle());
         ticket.setBody(dto.getBody());
-        ticket.setStatus(HelpdeskTicket.Status.valueOf(dto.getStatus()));
+        ticket.setStatus(HelpdeskTicket.Status.valueOf(dto.getStatus()));*/
         ticket.onCreate(); // Auto-set createdDate, createdBy, and ticketNumber
 
-        // **Handle assigned employee**
-        // **Handle assigned employee**
+        // Handle assigned employee
         if (dto.getAssignedEmployeeName() != null && !dto.getAssignedEmployeeName().isEmpty()) {
             Employee assignedEmployee = employeeRepository.findByName(dto.getAssignedEmployeeName())
                     .orElseThrow(() -> new EmployeeNotFoundException("Employee not found: " + dto.getAssignedEmployeeName()));
@@ -37,16 +37,25 @@ public class HelpdeskTicketService {
 
         // **Handle remarks before saving the ticket**
         if (dto.getRemarks() != null && !dto.getRemarks().isEmpty()) {
-            for (RemarkDto remarkDto : dto.getRemarks()) {
+            List<Remark> remarks = dto.getRemarks().stream()
+                    .map(ticketMapper::toEntity)  // Map each RemarkDto to Remark entity
+                    .peek(remark -> {
+                        remark.setCreatedBy(remark.getCreatedBy() != null ? remark.getCreatedBy() : "System");
+                        remark.setCreatedDate(LocalDateTime.now());
+                        remark.setTicket(ticket);
+                    })
+                    .collect(Collectors.toList());
+            ticket.setRemarks(remarks);
+            /*for (RemarkDto remarkDto : dto.getRemarks()) {
                 Remark remark = new Remark();
                 remark.setMessage(remarkDto.getMessage());
                 remark.setCreatedBy(remarkDto.getCreatedBy() != null ? remarkDto.getCreatedBy() : "System");
                 remark.setCreatedDate(LocalDateTime.now());
                 remark.setTicket(ticket);  // Link remark to ticket
                 ticket.getRemarks().add(remark);  // ✅ Add remark to ticket's list
-            }
+            }*/
             // **Update ticket's updatedBy and updatedDate based on the latest remark**
-            Remark latestRemark = ticket.getRemarks().get(ticket.getRemarks().size() - 1);
+            Remark latestRemark = remarks.get(remarks.size() - 1);
             ticket.setUpdatedBy(latestRemark.getCreatedBy());
             ticket.setUpdatedDate(latestRemark.getCreatedDate());
         } else {
@@ -56,49 +65,44 @@ public class HelpdeskTicketService {
 
         // **Save ticket (remarks will be saved automatically due to cascade = ALL)**
         HelpdeskTicket savedTicket = ticketRepository.save(ticket);
-
-        return mapToDto(savedTicket);
+        return ticketMapper.toDto(savedTicket);  // Use mapper to convert entity to DTO
     }
 
 
     public HelpdeskTicketDto getTicket(Long ticketId) {
         HelpdeskTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with ID: " + ticketId));
-        return mapToDto(ticket);
+        return ticketMapper.toDto(ticket);
     }
 
     public List<HelpdeskTicketDto> getAllTickets() {
-        return mapToDtoList(ticketRepository.findAll());
+        return ticketMapper.toDtoList(ticketRepository.findAll());
     }
 
-    // Get Draft Tickets
+    // Status based query methods
     public List<HelpdeskTicketDto> getDraftTickets() {
-        return mapToDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.DRAFT));
+        return ticketMapper.toDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.DRAFT));
     }
 
-    // Get Filed Tickets
     public List<HelpdeskTicketDto> getFiledTickets() {
-        return mapToDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.FILED));
+        return ticketMapper.toDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.FILED));
     }
 
-    // Get In-Progress Tickets
     public List<HelpdeskTicketDto> getInProgressTickets() {
-        return mapToDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.IN_PROGRESS));
+        return ticketMapper.toDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.IN_PROGRESS));
     }
 
-    // Get Closed Tickets
     public List<HelpdeskTicketDto> getClosedTickets() {
-        return mapToDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.CLOSED));
+        return ticketMapper.toDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.CLOSED));
     }
 
-    // Get Duplicate Tickets
     public List<HelpdeskTicketDto> getDuplicateTickets() {
-        return mapToDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.DUPLICATE));
+        return ticketMapper.toDtoList(ticketRepository.findByStatus(HelpdeskTicket.Status.DUPLICATE));
     }
 
     // Get Assigned Tickets
     public List<HelpdeskTicketDto> getAssignedTickets() {
-        return mapToDtoList(ticketRepository.findByAssignedEmployeeIsNotNull());
+        return ticketMapper.toDtoList(ticketRepository.findByAssignedEmployeeIsNotNull());
     }
 
     @Transactional
@@ -126,11 +130,8 @@ public class HelpdeskTicketService {
         ticket.onUpdate();
 
         HelpdeskTicket updatedTicket = ticketRepository.save(ticket);
-        return mapToDto(updatedTicket);
+        return ticketMapper.toDto(updatedTicket);
     }
-
-
-
 
     @Transactional
     public HelpdeskTicketDto updateTicketStatus(Long ticketId, String status) {
@@ -141,19 +142,20 @@ public class HelpdeskTicketService {
         ticket.onUpdate();
 
         HelpdeskTicket updatedTicket = ticketRepository.save(ticket);
-        return mapToDto(updatedTicket);
+        return ticketMapper.toDto(updatedTicket);
     }
 
     @Transactional
     public void deleteTicket(Long ticketId) {
         HelpdeskTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with ID: " + ticketId));
-
         ticketRepository.delete(ticket);
     }
 
 
-    /* private mappers */
+
+
+    /* private mappers
     private HelpdeskTicketDto mapToDto(HelpdeskTicket ticket) {
         return HelpdeskTicketDto.builder()
                 .id(ticket.getId())
@@ -183,7 +185,11 @@ public class HelpdeskTicketService {
         return tickets.stream()
                 .map(this::mapToDto) // Use the existing mapToDto method
                 .collect(Collectors.toList());
-    }
+    }*/
 
+
+    public List<HelpdeskTicketDto> getAssignedTicketsByEmployeeId(Long employeeId) {
+        return ticketMapper.toDtoList(ticketRepository.findByAssignedEmployeeId(employeeId));
+    }
 
 }

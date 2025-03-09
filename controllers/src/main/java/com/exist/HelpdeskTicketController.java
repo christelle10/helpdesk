@@ -67,6 +67,13 @@ public class HelpdeskTicketController {
         return ticketService.getAssignedTickets();
     }
 
+    // Get Tickets Assigned to Specific Employee by Employee ID
+    @GetMapping("/assigned/{employeeId}")
+    public ResponseEntity<List<HelpdeskTicketDto>> getAssignedTicketsByEmployeeId(@PathVariable Long employeeId) {
+        List<HelpdeskTicketDto> tickets = ticketService.getAssignedTicketsByEmployeeId(employeeId);
+        return ResponseEntity.ok(tickets);
+    }
+
     @PatchMapping("/{ticketId}")
     public ResponseEntity<HelpdeskTicketDto> partiallyUpdateTicket(
             @PathVariable Long ticketId,
