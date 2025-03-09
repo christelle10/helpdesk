@@ -11,10 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.beans.PropertyDescriptor;
 import java.time.LocalDate;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,14 +24,22 @@ public class EmployeeService {
     private final EmployeeMapper employeeMapper;
 
     @Transactional
-    // Create or update an employee record as DTO
     public EmployeeDto saveEmployee(EmployeeDto employeeDTO) {
+        // Check if employee with the same name or contact number already exists
+        Optional<Employee> existingEmployee = employeeRepository.findExistingEmployee(
+                employeeDTO.getName(), employeeDTO.getContactNumber());
+
+        if (existingEmployee.isPresent()) {
+            throw new DuplicateEmployeeException("An employee with the same name or contact number already exists.");
+        }
+
+        // Map DTO to entity and save
         Employee employee = employeeMapper.toEntity(employeeDTO);
         Employee savedEmployee = employeeRepository.save(employee);
         log.info("Employee {} saved successfully with ID: {}", employeeDTO.getName(), savedEmployee.getId());
+
         return employeeMapper.toDto(savedEmployee);
     }
-
     // Get a single employee by ID as DTO
     public EmployeeDto getEmployeeById(Long id) {
         return employeeRepository.findById(id)

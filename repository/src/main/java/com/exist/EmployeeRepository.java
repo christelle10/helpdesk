@@ -27,4 +27,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     // Restore a deleted employee using native SQL (because JPQL doesn't support updates)
     @Query(value = "UPDATE employees SET is_deleted = false, deleted_at = NULL WHERE id = :id", nativeQuery = true)
     void restoreEmployee(@Param("id") Long id);
+
+    // Check if an active (non-deleted) employee exists with the same name or contact number
+    @Query("SELECT e FROM Employee e WHERE (e.name = :name OR e.contactNumber = :contactNumber) AND e.deleted = false")
+    Optional<Employee> findExistingEmployee(@Param("name") String name, @Param("contactNumber") String contactNumber);
 }

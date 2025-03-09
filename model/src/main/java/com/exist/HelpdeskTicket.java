@@ -46,7 +46,7 @@ public class HelpdeskTicket {
     @Column(nullable = false)
     private String updatedBy;          // User who last updated the ticket
 
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true) //orphan removal ensures that when remark is removed, it's also deleted from database
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true) //orphan removal ensures that when ticket is removed, it's also deleted from database
     private List<Remark> remarks = new ArrayList<>();
 
     @PrePersist
