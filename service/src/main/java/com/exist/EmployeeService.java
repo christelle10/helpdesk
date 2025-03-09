@@ -47,11 +47,12 @@ public class EmployeeService {
 
     // Get a list of all employees as DTOs
     public List<EmployeeDto> getAllEmployees() {
-        List<Employee> employees = employeeRepository.findAll();
-        log.info("Total employees found: {}", employees.size());
+        List<Employee> employees = employeeRepository.findByDeletedFalse(); //Modified this one so we only fetch active employees
+        log.info("Total active employees found: {}", employees.size());
         return employees.stream().map(employeeMapper::toDto).collect(Collectors.toList());
     }
 
+    @Transactional
     public EmployeeDto updateEmployee(Long id, EmployeeDto employeeDTO, boolean isFullUpdate) {
         log.info("Updating employee with ID: {}", id);
         if (employeeDTO.getAge() != 0) {
@@ -82,17 +83,41 @@ public class EmployeeService {
                     return new EmployeeNotFoundException("Employee with ID " + id + " not found.");
                 });
     }
-    // Delete an employee by ID
+    //Soft Delete
+    @Transactional
     public String deleteEmployee(Long id) {
-        log.info("Attempting to delete employee with ID: {}", id);
-        if (!employeeRepository.existsById(id)) {
-            log.error("Employee with ID {} not found for deletion", id);
-            throw new EmployeeNotFoundException("Employee with ID " + id + " not found.");
-        }
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee with ID " + id + " not found."));
 
-        employeeRepository.deleteById(id);
-        log.info("Successfully deleted employee with ID: {}", id);
-        return "Successfully deleted employee with ID " + id;
+        employee.softDelete();
+        employeeRepository.save(employee);
+
+        log.info("Employee with ID {} was soft deleted.", id);
+        return "Employee successfully soft deleted.";
+    }
+
+    //Viewing a deleted employee
+    public List<EmployeeDto> getDeletedEmployees() {
+        List<Employee> deletedEmployees = employeeRepository.findByDeletedTrue();
+        return deletedEmployees.stream()
+                .map(employeeMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    // Restoring deleted employee
+    @Transactional
+    public String restoreEmployee(Long id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee with ID " + id + " not found."));
+
+        if (!employee.isDeleted()) {
+            return "Employee is already active.";
+        }
+        employee.setDeleted(false);
+        employee.setDeletedAt(null);
+        employeeRepository.save(employee);
+        log.info("Employee with ID {} was restored.", id);
+        return "Employee restored successfully.";
     }
 
 

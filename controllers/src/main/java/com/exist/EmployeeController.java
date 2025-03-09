@@ -80,4 +80,18 @@ public class EmployeeController {
         response.put("message", "Employee with ID " + id + " has been successfully deleted.");
         return ResponseEntity.ok(response);
     }
+
+    //Viewing deleted employees
+    @GetMapping("/deleted")
+    public List<EmployeeDto> getDeletedEmployees() {
+        return employeeService.getDeletedEmployees();
+    }
+
+    // Restoring deleted employee records
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<String> restoreEmployee(@PathVariable Long id) {
+        String message = employeeService.restoreEmployee(id);
+        return ResponseEntity.ok(message);
+    }
+
 }
