@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public interface HelpdeskTicketMapper {
     HelpdeskTicketMapper INSTANCE = Mappers.getMapper(HelpdeskTicketMapper.class);
 
-    @Mapping(source = "assignedEmployee.name", target = "assignedEmployeeName", defaultValue = "Unassigned")
+    @Mapping(source = "assignedEmployee", target = "assignedEmployeeName", qualifiedByName = "mapAssignedEmployeeName")
     @Mapping(source = "remarks", target = "remarks", qualifiedByName = "mapRemarks")
     HelpdeskTicketDto toDto(HelpdeskTicket ticket);
 
@@ -35,4 +35,16 @@ public interface HelpdeskTicketMapper {
 
     @Mapping(target = "id", source = "id")
     RemarkDto toRemarkDto(Remark remark);
+
+    // ✅ Custom logic to handle soft-deleted employees
+    @Named("mapAssignedEmployeeName")
+    default String mapAssignedEmployeeName(Employee assignedEmployee) {
+        if (assignedEmployee == null) {
+            return "Unassigned";
+        }
+        return assignedEmployee.isDeleted()
+                ? assignedEmployee.getName() + " [Employee deleted from records]"
+                : assignedEmployee.getName();
+    }
 }
+

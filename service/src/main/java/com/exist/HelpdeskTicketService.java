@@ -2,6 +2,7 @@ package com.exist;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ public class HelpdeskTicketService {
     private final HelpdeskTicketRepository ticketRepository;
     private final RemarkRepository remarkRepository;
     private final EmployeeRepository employeeRepository;
+    @Qualifier("helpdeskTicketMapper")
     private final HelpdeskTicketMapper ticketMapper;
 
     @Transactional
