@@ -48,6 +48,11 @@ public class Employee {
     @JoinColumn(name = "role_id")
     private Role role; //Deleting a Role entity associated to Employee entity will render this NULL
 
+    //Access level = ADMIN or EMPLOYEE
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccessLevel accessLevel; // ADMIN or EMPLOYEE
+
     // Soft delete field
     @Column(name = "is_deleted", nullable = false)
     @JsonProperty("is_deleted")

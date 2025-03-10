@@ -30,6 +30,7 @@ public class EmployeeDto {
     // Soft delete info (use Boolean instead of boolean to allow null)
     @JsonProperty("is_deleted")
     private Boolean deleted;
-
     private LocalDateTime deletedAt;
+
+    private AccessLevel accessLevel; // Include access level in the DTO
 }
