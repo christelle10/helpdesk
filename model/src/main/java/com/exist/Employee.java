@@ -26,6 +26,12 @@ public class Employee {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String email; // Login identifier
+
+    @Column(nullable = false)
+    private String password; // Password should be hashed
+
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(nullable = false)

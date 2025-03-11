@@ -7,10 +7,10 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>controllers</artifactId>
+    <artifactId>security</artifactId>
     <packaging>jar</packaging>
 
-    <name>controllers</name>
+    <name>security</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -26,19 +26,8 @@
         </dependency>
         <dependency>
             <groupId>com.exist</groupId>
-            <artifactId>service</artifactId>
+            <artifactId>repository</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>dto</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.exist</groupId>
-            <artifactId>security</artifactId>
-        </dependency>
+
     </dependencies>
 </project>
