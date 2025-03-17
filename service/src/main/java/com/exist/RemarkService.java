@@ -2,7 +2,8 @@ package com.exist;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,8 @@ public class RemarkService {
                 .createdBy(remark.getCreatedBy())
                 .build();
     }
+
+    @Transactional
     public RemarkDto addRemark(Long ticketId, RemarkDto remarkDto) {
         // 1️⃣ Find the ticket
         HelpdeskTicket ticket = ticketRepository.findById(ticketId)
@@ -38,8 +41,6 @@ public class RemarkService {
         // 2️⃣ Create new Remark
         Remark remark = new Remark();
         remark.setMessage(remarkDto.getMessage());
-        remark.setCreatedBy(remarkDto.getCreatedBy() != null ? remarkDto.getCreatedBy() : "System");
-        remark.setCreatedDate(LocalDateTime.now());
         remark.setTicket(ticket);
 
         // 3️⃣ Save the remark
@@ -59,6 +60,7 @@ public class RemarkService {
         );
     }
 
+    @Transactional
     public void deleteRemark(Long ticketId, Long remarkId) {
         Remark remark = remarkRepository.findById(remarkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Remark not found with ID: " + remarkId));

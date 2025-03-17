@@ -66,6 +66,10 @@
             <groupId>com.exist</groupId>
             <artifactId>mappers</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.exist</groupId>
+            <artifactId>security</artifactId>
+        </dependency>
 
     </dependencies>
     <build>

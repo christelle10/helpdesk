@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface HelpdeskTicketMapper {
-    HelpdeskTicketMapper INSTANCE = Mappers.getMapper(HelpdeskTicketMapper.class);
 
     @Mapping(source = "assignedEmployee", target = "assignedEmployeeName", qualifiedByName = "mapAssignedEmployeeName")
     @Mapping(source = "remarks", target = "remarks", qualifiedByName = "mapRemarks")

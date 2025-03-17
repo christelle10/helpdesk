@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tickets/{ticketId}/remarks") //(Clearly scoped under a specific ticket)
+@RequestMapping("/api/admin/tickets/{ticketId}/remarks") //(Clearly scoped under a specific ticket)
 @RequiredArgsConstructor
 public class RemarkController {
 

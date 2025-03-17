@@ -12,7 +12,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/api/admin/roles")
 @RequiredArgsConstructor
 public class RoleController {
     private final RoleService roleService;

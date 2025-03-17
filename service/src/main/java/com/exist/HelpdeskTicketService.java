@@ -12,26 +12,30 @@ import java.util.List;
 
 
 @Service
-@RequiredArgsConstructor
 public class HelpdeskTicketService {
     private final HelpdeskTicketRepository ticketRepository;
-    private final RemarkRepository remarkRepository;
     private final EmployeeRepository employeeRepository;
-    @Qualifier("helpdeskTicketMapper")
     private final HelpdeskTicketMapper ticketMapper;
+
+    public HelpdeskTicketService( //did not use the lombok constructor because it cannot resolve the one that needs Qualifier
+            HelpdeskTicketRepository ticketRepository,
+            RemarkRepository remarkRepository,
+            EmployeeRepository employeeRepository,
+            @Qualifier("helpdeskTicketMapperImpl") HelpdeskTicketMapper ticketMapper) { // to specify that the helpdeskTicketMapper should be the one to use and not the helpdeskTicketMapperImpl
+        this.ticketRepository = ticketRepository;
+        this.employeeRepository = employeeRepository;
+        this.ticketMapper = ticketMapper;
+    }
 
     @Transactional
     public HelpdeskTicketDto createTicket(HelpdeskTicketDto dto) {
         HelpdeskTicket ticket = ticketMapper.toEntity(dto); // Map DTO to Entity
-        /*ticket.setTitle(dto.getTitle());
-        ticket.setBody(dto.getBody());
-        ticket.setStatus(HelpdeskTicket.Status.valueOf(dto.getStatus()));*/
         ticket.onCreate(); // Auto-set createdDate, createdBy, and ticketNumber
 
         // Handle assigned employee
         if (dto.getAssignedEmployeeName() != null && !dto.getAssignedEmployeeName().isEmpty()) {
-            Employee assignedEmployee = employeeRepository.findByName(dto.getAssignedEmployeeName())
-                    .orElseThrow(() -> new EmployeeNotFoundException("Employee not found: " + dto.getAssignedEmployeeName()));
+            Employee assignedEmployee = employeeRepository.findByNameAndDeletedFalse(dto.getAssignedEmployeeName())
+                    .orElseThrow(() -> new EmployeeNotFoundException("Employee not found or is deleted: " + dto.getAssignedEmployeeName()));
             ticket.setAssignedEmployee(assignedEmployee);
         } else {
             ticket.setAssignedEmployee(null);  // Ensure it's null so "Unassigned" is set in DTO mapping
@@ -48,16 +52,7 @@ public class HelpdeskTicketService {
                     })
                     .collect(Collectors.toList());
             ticket.setRemarks(remarks);
-            /*for (RemarkDto remarkDto : dto.getRemarks()) {
-                Remark remark = new Remark();
-                remark.setMessage(remarkDto.getMessage());
-                remark.setCreatedBy(remarkDto.getCreatedBy() != null ? remarkDto.getCreatedBy() : "System");
-                remark.setCreatedDate(LocalDateTime.now());
-                remark.setTicket(ticket);  // Link remark to ticket
-                ticket.getRemarks().add(remark);  // ✅ Add remark to ticket's list
-            }*/
-            // **Update ticket's updatedBy and updatedDate based on the latest remark**
-            Remark latestRemark = remarks.get(remarks.size() - 1);
+            Remark latestRemark = remarks.getLast();
             ticket.setUpdatedBy(latestRemark.getCreatedBy());
             ticket.setUpdatedDate(latestRemark.getCreatedDate());
         } else {
@@ -112,6 +107,19 @@ public class HelpdeskTicketService {
         HelpdeskTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with ID: " + ticketId));
 
+        // Get the currently authenticated employee's name and role
+        String currentUser = JwtAuthenticationUtil.getAuthenticatedEmployeeName();
+        String currentUserRole = JwtAuthenticationUtil.getAuthenticatedEmployeeRole(); // Assume this method exists
+
+        // Allow admins to update any ticket
+        if (!"ADMIN".equals(currentUserRole)) {
+            // Ensure only the assigned employee can update
+            if (ticket.getAssignedEmployee() == null ||
+                    !ticket.getAssignedEmployee().getName().equals(currentUser)) {
+                throw new UnauthorizedAccessException("You are not authorized to update this ticket.");
+            }
+        }
+
         // Only update fields if they are not null
         if (dto.getTitle() != null) {
             ticket.setTitle(dto.getTitle());
@@ -135,60 +143,26 @@ public class HelpdeskTicketService {
         return ticketMapper.toDto(updatedTicket);
     }
 
-    @Transactional
-    public HelpdeskTicketDto updateTicketStatus(Long ticketId, String status) {
-        HelpdeskTicket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with ID: " + ticketId));
-
-        ticket.setStatus(HelpdeskTicket.Status.valueOf(status.toUpperCase()));
-        ticket.onUpdate();
-
-        HelpdeskTicket updatedTicket = ticketRepository.save(ticket);
-        return ticketMapper.toDto(updatedTicket);
-    }
 
     @Transactional
     public void deleteTicket(Long ticketId) {
         HelpdeskTicket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with ID: " + ticketId));
+
+        // Get the currently authenticated employee's name and role
+        String currentUser = JwtAuthenticationUtil.getAuthenticatedEmployeeName();
+        String currentUserRole = JwtAuthenticationUtil.getAuthenticatedEmployeeRole(); // Assume this method exists
+
+        // Allow admins to delete any ticket
+        if (!"ADMIN".equals(currentUserRole)) {
+            // Ensure only the assigned employee can delete
+            if (ticket.getAssignedEmployee() == null ||
+                    !ticket.getAssignedEmployee().getName().equals(currentUser)) {
+                throw new UnauthorizedAccessException("You are not authorized to delete this ticket.");
+            }
+        }
         ticketRepository.delete(ticket);
     }
-
-
-
-
-    /* private mappers
-    private HelpdeskTicketDto mapToDto(HelpdeskTicket ticket) {
-        return HelpdeskTicketDto.builder()
-                .id(ticket.getId())
-                .ticketNumber(ticket.getTicketNumber())
-                .title(ticket.getTitle())
-                .body(ticket.getBody())
-                .status(ticket.getStatus().name())
-                .assignedEmployeeName(ticket.getAssignedEmployee() != null ? ticket.getAssignedEmployee().getName() : "Unassigned")
-                .createdDate(ticket.getCreatedDate())
-                .createdBy(ticket.getCreatedBy())
-                .updatedDate(ticket.getUpdatedDate())
-                .updatedBy(ticket.getUpdatedBy())
-                .remarks(ticket.getRemarks().stream().map(this::mapToRemarkDto).collect(Collectors.toList()))
-                .build();
-    }
-
-    private RemarkDto mapToRemarkDto(Remark remark) {
-        return RemarkDto.builder()
-                .id(remark.getId())
-                .message(remark.getMessage())
-                .createdDate(remark.getCreatedDate())
-                .createdBy(remark.getCreatedBy())
-                .build();
-    }
-    // Helper method to map entity list to DTO list
-    private List<HelpdeskTicketDto> mapToDtoList(List<HelpdeskTicket> tickets) {
-        return tickets.stream()
-                .map(this::mapToDto) // Use the existing mapToDto method
-                .collect(Collectors.toList());
-    }*/
-
 
     public List<HelpdeskTicketDto> getAssignedTicketsByEmployeeId(Long employeeId) {
         return ticketMapper.toDtoList(ticketRepository.findByAssignedEmployeeId(employeeId));

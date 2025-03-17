@@ -12,7 +12,7 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tickets")
-public class HelpdeskTicket {
+public class HelpdeskTicket extends CreatedDetailsEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,12 +36,6 @@ public class HelpdeskTicket {
     private Employee assignedEmployee;  // Assignee
 
     @Column(nullable = false)
-    private LocalDateTime createdDate;  // System-generated date for creation
-
-    @Column(nullable = false)
-    private String createdBy;          // System-generated created by user
-
-    @Column(nullable = false)
     private LocalDateTime updatedDate;  // System-generated date for last update
     @Column(nullable = false)
     private String updatedBy;          // User who last updated the ticket
@@ -49,16 +43,14 @@ public class HelpdeskTicket {
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true) //orphan removal ensures that when ticket is removed, it's also deleted from database
     private List<Remark> remarks = new ArrayList<>();
 
-    @PrePersist
-    public void onCreate() {
-        // Automatically set ticketNumber, createdDate, createdBy during the creation of the ticket
-        this.ticketNumber = "TICKET-" + System.currentTimeMillis(); // Generate ticket number based on the current time
-        this.createdDate = LocalDateTime.now();
-        this.createdBy = "System";  // Set it as "System" for now while there are still no authentications for employee
 
-        // Set updatedDate and updatedBy to be the same as createdDate and createdBy initially
-        this.updatedDate = this.createdDate;
-        this.updatedBy = this.createdBy;
+    public void onCreate() {
+        this.ticketNumber = "TICKET-" + System.currentTimeMillis(); // Generate ticket number
+        super.onCreate(); // Calls the inherited method from CreatedDetailsEntity
+
+        // Set updatedDate and updatedBy initially
+        this.updatedDate = getCreatedDate();
+        this.updatedBy = getCreatedBy();
     }
 
     @PreUpdate

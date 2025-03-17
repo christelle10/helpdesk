@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,15 +15,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@AllArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtService jwtService;
-
-    public JwtAuthenticationFilter(UserDetailsServiceImpl userDetailsService, JwtService jwtService) {
-        this.userDetailsService = userDetailsService;
-        this.jwtService = jwtService;
-    }
+    private final EmployeeRepository employeeRepository; // Inject EmployeeRepository
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,16 +34,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authorizationHeader.substring(7);
-        String username = jwtService.extractUsername(token);
+        String username = jwtService.extractUsername(token); // Email from JWT
         String accessLevel = jwtService.extractAccessLevel(token);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtService.validateToken(token, userDetails)) {
+                // Fetch the Employee entity to get the full name
+                Employee employee = employeeRepository.findByEmail(username)
+                        .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+                // Create authentication object with additional details
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(accessLevel); // Store access level in authentication
+
+                authentication.setDetails(employee.getName()); // Store employee's full name
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

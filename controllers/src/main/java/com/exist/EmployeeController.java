@@ -2,10 +2,8 @@ package com.exist;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,7 +15,6 @@ import java.util.*;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-
 
     // Get all employees
     @GetMapping
@@ -31,21 +28,21 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getEmployeeById(id));
     }
 
-    // Create a new employee
+    //create new employee
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createEmployee(@Valid @RequestBody EmployeeDto employeeDto) {
-        EmployeeDto savedEmployee = employeeService.saveEmployee(employeeDto);
+    public ResponseEntity<Map<String, Object>> createEmployee(@Valid @RequestBody RegisterEmployeeDto registerEmployeeDto) {
+        EmployeeDto savedEmployee = employeeService.saveEmployee(registerEmployeeDto);
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Employee successfully created.");
-        response.put("employee", savedEmployee); // Include the created employee details
+        response.put("employee", savedEmployee);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // Full Update (PUT) - Updates all fields
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeDto employeeDTO) {
+    public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id, @Valid @RequestBody UpdateEmployeeDto employeeDTO) {
         EmployeeDto updatedEmployee = employeeService.updateEmployee(id, employeeDTO, true);
         return ResponseEntity.ok(updatedEmployee);
     }
@@ -56,10 +53,10 @@ public class EmployeeController {
     public ResponseEntity<Map<String, Object>> patchEmployee(
             @PathVariable Long id,
             //@Validated(PartialUpdate.class)
-            @RequestBody EmployeeDto employeeDto) {
+            @RequestBody UpdateEmployeeDto updateEmployeeDto) {
         try {
-            employeeService.validatePartialUpdate(employeeDto);
-            EmployeeDto updatedEmployee = employeeService.updateEmployee(id, employeeDto, false);
+            employeeService.validatePartialUpdate(updateEmployeeDto);
+            EmployeeDto updatedEmployee = employeeService.updateEmployee(id, updateEmployeeDto, false);
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Employee successfully updated.");
             response.put("employee", updatedEmployee); // Include updated details

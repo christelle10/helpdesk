@@ -22,21 +22,34 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final EmployeeMapper employeeMapper;
-
+    private final SecurityConfig securityConfig;
     @Transactional
-    public EmployeeDto saveEmployee(EmployeeDto employeeDTO) {
+    public EmployeeDto saveEmployee(RegisterEmployeeDto registerEmployeeDto) {
         // Check if employee with the same name or contact number already exists
         Optional<Employee> existingEmployee = employeeRepository.findExistingEmployee(
-                employeeDTO.getName(), employeeDTO.getContactNumber());
+                registerEmployeeDto.getName(), registerEmployeeDto.getContactNumber());
 
         if (existingEmployee.isPresent()) {
             throw new DuplicateEmployeeException("An employee with the same name or contact number already exists.");
         }
 
-        // Map DTO to entity and save
-        Employee employee = employeeMapper.toEntity(employeeDTO);
+        // Map RegisterEmployeeDto to Employee
+        Employee employee = new Employee();
+        employee.setEmail(registerEmployeeDto.getEmail());
+        employee.setName(registerEmployeeDto.getName());
+        employee.setAddress(registerEmployeeDto.getAddress());
+        employee.setContactNumber(registerEmployeeDto.getContactNumber());
+        employee.setEmploymentStatus(registerEmployeeDto.getEmploymentStatus());
+        employee.setAccessLevel(registerEmployeeDto.getAccessLevel());
+        employee.setBirthdate(registerEmployeeDto.getBirthdate());
+
+        // Hash the password before saving
+        String hashedPassword = securityConfig.passwordEncoder().encode(registerEmployeeDto.getPassword());
+        employee.setPassword(hashedPassword);
+
+        // Save employee
         Employee savedEmployee = employeeRepository.save(employee);
-        log.info("Employee {} saved successfully with ID: {}", employeeDTO.getName(), savedEmployee.getId());
+        log.info("Employee {} saved successfully with ID: {}", registerEmployeeDto.getName(), savedEmployee.getId());
 
         return employeeMapper.toDto(savedEmployee);
     }
@@ -58,27 +71,35 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeDto updateEmployee(Long id, EmployeeDto employeeDTO, boolean isFullUpdate) {
+    public EmployeeDto updateEmployee(Long id, UpdateEmployeeDto updateDto, boolean isFullUpdate) {
         log.info("Updating employee with ID: {}", id);
-        if (employeeDTO.getAge() != 0) {
-            log.warn("Age cannot be updated directly.");
-            throw new IllegalArgumentException("Age cannot be updated directly. Update birthdate instead, and age will be calculated automatically.");
+
+        if (updateDto.getAge() != 0) {
+            throw new IllegalArgumentException("Age cannot be updated directly. Update birthdate instead.");
         }
 
         return employeeRepository.findById(id)
                 .map(existingEmployee -> {
                     if (isFullUpdate) {
-                        // Full update: Replace all fields
-                        log.info("Performing full update on employee with ID: {}", id);
-                        validateEmployee(employeeDTO);
-                        Employee updatedEmployee = employeeMapper.toEntity(employeeDTO);
+                        // Full update
+                        log.info("Performing full update for employee ID: {}", id);
+                        validateEmployee(updateDto);
+                        Employee updatedEmployee = employeeMapper.toEntity(updateDto);
                         updatedEmployee.setId(id); // Ensure ID remains unchanged
+
+                        // Preserve the original password
+                        updatedEmployee.setPassword(existingEmployee.getPassword());
+
                         return employeeRepository.save(updatedEmployee);
                     } else {
-                        // Partial update: Only copy non-null fields
-                        log.info("Performing partial update on employee with ID: {}", id);
-                        validatePartialUpdate(employeeDTO);
-                        copyNonNullProperties(employeeDTO, existingEmployee);
+                        // Partial update
+                        log.info("Performing partial update for employee ID: {}", id);
+                        validatePartialUpdate(updateDto);
+                        copyNonNullProperties(updateDto, existingEmployee);
+
+                        // Ensure password remains unchanged
+                        existingEmployee.setPassword(existingEmployee.getPassword());
+
                         return employeeRepository.save(existingEmployee);
                     }
                 })
@@ -88,6 +109,7 @@ public class EmployeeService {
                     return new EmployeeNotFoundException("Employee with ID " + id + " not found.");
                 });
     }
+
     //Soft Delete
     @Transactional
     public String deleteEmployee(Long id) {
@@ -127,17 +149,21 @@ public class EmployeeService {
 
 
     // Utility method to copy only non-null properties
-    private void copyNonNullProperties(EmployeeDto source, Employee target) {
-        // Ensure null properties are ignored
+    private void copyNonNullProperties(UpdateEmployeeDto source, Employee target) {
         String[] ignoredProperties = getNullPropertyNames(source);
         BeanUtils.copyProperties(source, target, ignoredProperties);
 
-        // Manually handle Role (because it's a separate entity)
+        // ✅ Ensure role is updated only if `roleName` is provided
         if (source.getRoleName() != null) {
             Role role = roleRepository.findByRoleName(source.getRoleName());
-            target.setRole(role);
+            if (role != null) {
+                target.setRole(role);
+            } else {
+                throw new IllegalArgumentException("Role '" + source.getRoleName() + "' does not exist.");
+            }
         }
     }
+
 
 
     // Get null property names for ignoring
@@ -148,7 +174,7 @@ public class EmployeeService {
                 .filter(name -> src.getPropertyValue(name) == null) // Check if value is null
                 .toArray(String[]::new); // Convert to array
     }
-    public void validateEmployee(EmployeeDto employeeDto) {
+    public void validateEmployee(UpdateEmployeeDto employeeDto) {
         Map<String, String> errors = new HashMap<>();
 
         if (employeeDto.getName() == null || employeeDto.getName().isBlank()) {
@@ -167,11 +193,15 @@ public class EmployeeService {
             errors.put("roleName", "Invalid role name.");
         }
 
+        if (employeeDto.getEmail() != null && !employeeDto.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            errors.put("email", "Invalid email format.");
+        }
+
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(errors.toString());
         }
     }
-    public void validatePartialUpdate(EmployeeDto employeeDto) {
+    public void validatePartialUpdate(UpdateEmployeeDto employeeDto) {
         Map<String, String> errors = new HashMap<>();
         // Validate Name - Must not contain symbols, only letters and spaces
         if (employeeDto.getName() != null) {

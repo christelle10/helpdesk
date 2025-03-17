@@ -19,6 +19,7 @@ import lombok.Setter;
 public class EmployeeDto {
     private Long id;
     private String name;
+    private String email; // Required for login
     private LocalDate birthdate;
     //Age calculated from birthdate
     private int age;

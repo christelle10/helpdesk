@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api/tickets")
+@RequestMapping("api/admin/tickets")
 @RequiredArgsConstructor
 public class HelpdeskTicketController {
     private final HelpdeskTicketService ticketService;
@@ -84,15 +84,6 @@ public class HelpdeskTicketController {
     @PutMapping("/{ticketId}")
     public ResponseEntity<HelpdeskTicketDto> updateTicket(@PathVariable Long ticketId, @RequestBody HelpdeskTicketDto dto) {
         return ResponseEntity.ok(ticketService.updateTicket(ticketId, dto));
-    }
-
-    @PatchMapping("/{ticketId}/status")
-    public ResponseEntity<HelpdeskTicketDto> updateTicketStatus(
-            @PathVariable Long ticketId,
-            @RequestBody Map<String, String> payload) {
-
-        String status = payload.get("status");
-        return ResponseEntity.ok(ticketService.updateTicketStatus(ticketId, status));
     }
 
 

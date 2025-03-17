@@ -13,6 +13,10 @@ import java.util.Optional;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Optional<Employee> findByName(String name);
+
+    // Ensure only non-deleted employees can be retrieved
+    Optional<Employee> findByNameAndDeletedFalse(String name);
+
     List<Employee> findByRole(Role role);
 
     // Exclude soft-deleted records
